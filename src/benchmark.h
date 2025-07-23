@@ -18,8 +18,8 @@
 */
 
 
-#if !defined(BENCHMARK_H_INCLUDED)
-#define BENCHMARK_H_INCLUDED
+#ifndef BENCHMARK_H
+#define BENCHMARK_H
 
 ////
 //// Includes
@@ -34,4 +34,4 @@
 
 extern void benchmark(const std::string& commandLine);
 
-#endif // !defined(BENCHMARK_H_INCLUDED)
+#endif // #ifndef BENCHMARK_H
