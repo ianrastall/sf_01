@@ -38,7 +38,6 @@
 #include "tt.h"
 #include "ucioption.h"
 
-
 ////
 //// Local definitions
 ////
@@ -191,9 +190,7 @@ namespace {
   Move BestRootMove, PonderMove, EasyMove;
   int RootMoveNumber;
   bool InfiniteSearch;
-  bool PonderSearch;
   bool StopOnPonderhit;
-  bool AbortSearch;
   bool Quit;
   bool FailHigh;
   bool Problem;
@@ -255,7 +252,7 @@ namespace {
   int current_search_time();
   int nps();
   void poll();
-  void ponderhit();
+  void ponderhit_internal();
   void print_current_line(SearchStack ss[], int ply, int threadID);
   void wait_for_stop_or_ponderhit();
 
@@ -279,6 +276,19 @@ namespace {
 
 }
 
+// Global flags
+bool AbortSearch = false;
+bool PonderSearch = false;
+
+void uci_stop_search() {
+    AbortSearch = true;
+    PonderSearch = false;
+}
+
+void uci_ponderhit() {
+    ponderhit_internal();
+}
+
 
 ////
 //// Global variables
@@ -286,6 +296,7 @@ namespace {
 
 // The main transposition table
 TranspositionTable TT = TranspositionTable(TTDefaultSize);
+
 
 
 // Number of active threads:
@@ -2192,6 +2203,19 @@ namespace {
   // looks at the time consumed so far and decides if it's time to abort the
   // search.
 
+  void ponderhit_internal() {
+    int t = current_search_time();
+    PonderSearch = false;
+    if(Iteration >= 2 &&
+       (!InfiniteSearch && (StopOnPonderhit ||
+                            t > AbsoluteMaxSearchTime ||
+                            (RootMoveNumber == 1 &&
+                             t > MaxSearchTime + ExtraSearchTime) ||
+                            (!FailHigh && !fail_high_ply_1() && !Problem &&
+                             t > 6*(MaxSearchTime + ExtraSearchTime)))))
+      AbortSearch = true;
+  }
+
   void poll() {
 
     static int lastInfoTime;
@@ -2217,7 +2241,7 @@ namespace {
             PonderSearch = false;
         }
         else if(command == "ponderhit")
-            ponderhit();
+            uci_ponderhit();
     }
     // Print search information
     if (t < 1000)
@@ -2264,18 +2288,6 @@ namespace {
   // it's the opponent's turn to move) in order to let the engine know that
   // it correctly predicted the opponent's move.
 
-  void ponderhit() {
-    int t = current_search_time();
-    PonderSearch = false;
-    if(Iteration >= 2 &&
-       (!InfiniteSearch && (StopOnPonderhit ||
-                            t > AbsoluteMaxSearchTime ||
-                            (RootMoveNumber == 1 &&
-                             t > MaxSearchTime + ExtraSearchTime) ||
-                            (!FailHigh && !fail_high_ply_1() && !Problem &&
-                             t > 6*(MaxSearchTime + ExtraSearchTime)))))
-      AbortSearch = true;
-  }
 
 
   // print_current_line() prints the current line of search for a given

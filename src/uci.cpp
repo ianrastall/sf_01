@@ -34,6 +34,7 @@
 #include "position.h"
 #include "san.h"
 #include "search.h"
+#include "search.h"
 #include "uci.h"
 #include "ucioption.h"
 
@@ -145,6 +146,10 @@ namespace {
         set_option(uip);
     else if (token == "go")
         go(uip);
+    else if (token == "stop")
+        uci_stop_search();
+    else if (token == "ponderhit")
+        uci_ponderhit();
 
     // The remaining commands are for debugging purposes only.
     // Perhaps they should be removed later in order to reduce the
